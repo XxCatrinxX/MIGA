@@ -12,6 +12,11 @@ type CartItem = {
   quantity: number
 }
 
+type CartNotice = {
+  product: Product
+  id: number
+}
+
 const WHATSAPP_NUMBER = '523311948323'
 
 const money = (amount: number) =>
@@ -34,6 +39,16 @@ function App() {
   const [cart, setCart] = useState<CartItem[]>([])
   const [cartOpen, setCartOpen] = useState(false)
   const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const [cartNotice, setCartNotice] = useState<CartNotice | null>(null)
+
+  useEffect(() => {
+    if (!cartNotice) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => setCartNotice(null), 3500)
+    return () => window.clearTimeout(timeoutId)
+  }, [cartNotice])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -102,6 +117,11 @@ function App() {
   ].join('\n')
 
   function addToCart(product: Product) {
+    setCartNotice((current) => ({
+      product,
+      id: (current?.id ?? 0) + 1,
+    }))
+
     setCart((current) => {
       const existing = current.find(
         (item) => item.product.id === product.id,
@@ -148,6 +168,7 @@ function App() {
 
       setCart([])
       setCartOpen(false)
+      setCartNotice(null)
       window.alert(
         `¡Pedido recibido! Tu folio es #${order.id}. Total: ${money(order.total)}.`,
       )
@@ -184,7 +205,10 @@ function App() {
 
         <button
           className="cart-button"
-          onClick={() => setCartOpen(true)}
+          onClick={() => {
+            setCartNotice(null)
+            setCartOpen(true)
+          }}
           aria-label={`Abrir carrito, ${cartCount} productos`}
         >
           <span>Mi pedido</span>
@@ -349,12 +373,7 @@ function App() {
                       {product.description}
                     </p>
 
-                    <button
-                      className="add-button"
-                      onClick={() => addToCart(product)}
-                    >
-                      Agregar al pedido <span>+</span>
-                    </button>
+                  
                   </article>
                 ))}
               </div>
@@ -387,6 +406,63 @@ function App() {
               )}
             </>
           )}
+        </section>
+
+        <section className="cafe-notes" aria-labelledby="cafe-notes-title">
+          <div className="cafe-notes-intro">
+            <span className="eyebrow">UN POCO MÁS SOBRE MIGA</span>
+            <h2 id="cafe-notes-title">
+              Detrás de cada taza,
+              <br />
+              hay algo <em>que contar.</em>
+            </h2>
+            <p>
+              Somos una cafetería para hacer una pausa: café preparado al
+              momento, panadería para acompañarlo y un ambiente que invita a
+              quedarse.
+            </p>
+            <a href="#menu" className="notes-link">
+              Encuentra tu favorito <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+
+          <div className="coffee-facts">
+            <article className="coffee-fact">
+              <span className="fact-number">01</span>
+              <div>
+                <h3>El café empieza como una fruta</h3>
+                <p>
+                  Los granos que tostamos son las semillas que crecen dentro
+                  de la cereza del cafeto.
+                </p>
+              </div>
+              <span className="fact-mark" aria-hidden="true">✳</span>
+            </article>
+
+            <article className="coffee-fact">
+              <span className="fact-number">02</span>
+              <div>
+                <h3>El aroma también se disfruta</h3>
+                <p>
+                  Al tostarse, el café desarrolla buena parte de los aromas
+                  que hacen única cada taza.
+                </p>
+              </div>
+              <span className="fact-mark" aria-hidden="true">〰</span>
+            </article>
+
+            <article className="coffee-fact">
+              <span className="fact-number">03</span>
+              <div>
+                <h3>El croissant tiene muchas capas</h3>
+                <p>
+                  Su hojaldre se forma al alternar masa y mantequilla, y
+                  plegarlas una y otra vez antes de hornear.
+                </p>
+              </div>
+              <span className="fact-mark" aria-hidden="true">✧</span>
+            </article>
+          </div>
         </section>
 
         <section className="philosophy" id="nosotros">
@@ -440,6 +516,32 @@ function App() {
           />
         </svg>
       </a>
+
+      {cartNotice && !cartOpen && (
+        <div className="cart-toast" role="status" aria-live="polite">
+          <span className="cart-toast-check" aria-hidden="true">✓</span>
+          <div className="cart-toast-copy">
+            <strong>Agregado al carrito</strong>
+            <span>{cartNotice.product.name}</span>
+          </div>
+          <button
+            className="cart-toast-view"
+            onClick={() => {
+              setCartNotice(null)
+              setCartOpen(true)
+            }}
+          >
+            Ver pedido ({cartCount})
+          </button>
+          <button
+            className="cart-toast-close"
+            onClick={() => setCartNotice(null)}
+            aria-label="Cerrar notificación"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {cartOpen && (
         <div
